@@ -18,6 +18,13 @@
 package smartAssetsLedger
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"math/big"
+	"sync"
+
 	"github.com/SealSC/SealABC/common/utility/serializer/structSerializer"
 	"github.com/SealSC/SealABC/crypto"
 	"github.com/SealSC/SealABC/dataStructure/enum"
@@ -27,19 +34,13 @@ import (
 	"github.com/SealSC/SealABC/metadata/seal"
 	"github.com/SealSC/SealABC/service/system/blockchain/chainStructure"
 	"github.com/SealSC/SealABC/storage/db/dbInterface/kvDatabase"
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"math/big"
-	"sync"
 )
 
 type Ledger struct {
-	txPool        map[string] *Transaction
+	txPool        map[string]*Transaction
 	txPoolRecord  []string
 	txPoolLimit   int
-	clientTxCount map[string] int
+	clientTxCount map[string]int
 	clientTxLimit int
 
 	operateLock sync.RWMutex
@@ -47,12 +48,12 @@ type Ledger struct {
 
 	genesisAssets BaseAssets
 
-	preActuators   map[string] txPreActuator
-	queryActuators map[string] queryActuator
+	preActuators   map[string]txPreActuator
+	queryActuators map[string]queryActuator
 
-	chain         chainStructure.IChainInterface
-	CryptoTools   crypto.Tools
-	Storage       kvDatabase.IDriver
+	chain       chainStructure.IChainInterface
+	CryptoTools crypto.Tools
+	Storage     kvDatabase.IDriver
 
 	storageForEVM contractStorage
 }
@@ -65,11 +66,11 @@ func Load() {
 	enum.BuildErrorEnum(&Errors, 1000)
 }
 
-func (l *Ledger) SetChain(chain chainStructure.IChainInterface)  {
+func (l *Ledger) SetChain(chain chainStructure.IChainInterface) {
 	l.chain = chain
 }
 
-func (l *Ledger) LoadGenesisAssets(owner []byte, assets BaseAssetsData) error  {
+func (l *Ledger) LoadGenesisAssets(owner []byte, assets BaseAssetsData) error {
 	_, exists, err := l.getSystemAssets()
 	if err != nil {
 		return err
@@ -137,24 +138,24 @@ func (l *Ledger) LoadGenesisAssets(owner []byte, assets BaseAssetsData) error  {
 	return err
 }
 
-func (l *Ledger) AddTx(req blockchainRequest.Entity) error {
+func (l *Ledger) AddTx(req blockchainRequest.Entity) ([]byte, error) {
 	tx := Transaction{}
 	err := json.Unmarshal(req.Data, &tx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if tx.Type != req.RequestAction {
-		return errors.New("transaction type is not equal to block request action")
+		return nil, errors.New("transaction type is not equal to block request action")
 	}
 
 	if !bytes.Equal(tx.From, tx.DataSeal.SignerPublicKey) {
-		return errors.New("invalid sender")
+		return nil, errors.New("invalid sender")
 	}
 
 	valid, err := tx.verify(l.CryptoTools.HashCalculator)
 	if !valid {
-		return err
+		return nil, err
 	}
 
 	//todo: check balance to ensure client has enough base-assets to pay transaction basic fee
@@ -165,28 +166,28 @@ func (l *Ledger) AddTx(req blockchainRequest.Entity) error {
 	client := string(tx.DataSeal.SignerPublicKey)
 	clientTxCount := l.clientTxCount[client]
 	if clientTxCount >= l.clientTxLimit {
-		return errors.New("reach transaction count limit")
+		return nil, errors.New("reach transaction count limit")
 	}
 
 	if len(l.txPool) >= l.txPoolLimit {
-		return errors.New("reach transaction pool limit")
+		return nil, errors.New("reach transaction pool limit")
 	}
 
 	_, exists, _ := l.getTxFromStorage(tx.DataSeal.Hash)
 	if exists {
-		return errors.New("duplicate history transaction")
+		return nil, errors.New("duplicate history transaction")
 	}
 
 	txHash := string(tx.DataSeal.Hash)
 	if l.txPool[txHash] != nil {
-		return errors.New("duplicate pending transaction")
+		return nil, errors.New("duplicate pending transaction")
 	}
 
 	l.txPool[txHash] = &tx
 	l.txPoolRecord = append(l.txPoolRecord, txHash)
 	l.clientTxCount[client] = clientTxCount + 1
 
-	return nil
+	return tx.DataSeal.Hash, nil
 }
 
 func (l Ledger) txResultCheck(orgResult TransactionResult, execResult TransactionResult, txHash []byte) error {
@@ -204,8 +205,8 @@ func (l Ledger) txResultCheck(orgResult TransactionResult, execResult Transactio
 
 	for i, s := range orgResult.NewState {
 		if !bytes.Equal(s.Key, execResult.NewState[i].Key) ||
-		   !bytes.Equal(s.OrgVal, execResult.NewState[i].OrgVal) ||
-		   !bytes.Equal(s.NewVal, execResult.NewState[i].NewVal) {
+			!bytes.Equal(s.OrgVal, execResult.NewState[i].OrgVal) ||
+			!bytes.Equal(s.NewVal, execResult.NewState[i].NewVal) {
 			return errors.New(fmt.Sprintf("transaction %x has different state to change", txHash))
 		}
 	}
@@ -217,8 +218,8 @@ func (l Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []b
 	l.poolLock.Lock()
 	defer l.poolLock.Unlock()
 
-	txHash := map[string] bool{}
-	resultCache := txResultCache {
+	txHash := map[string]bool{}
+	resultCache := txResultCache{
 		CachedBlockGasKey: &txResultCacheData{
 			gasLeft: constTransactionGasLimit().Uint64(),
 		},
@@ -263,7 +264,7 @@ func (l Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []b
 }
 
 func (l *Ledger) removeTransactionsFromPool(txList []Transaction) {
-	removeTxHashes := map[string] bool {}
+	removeTxHashes := map[string]bool{}
 
 	for _, tx := range txList {
 		txHashStr := string(tx.getHash())
@@ -274,7 +275,7 @@ func (l *Ledger) removeTransactionsFromPool(txList []Transaction) {
 		}
 
 		client := string(tx.DataSeal.SignerPublicKey)
-		if l.clientTxCount[client] > 0{
+		if l.clientTxCount[client] > 0 {
 			l.clientTxCount[client] -= 1
 		}
 	}
@@ -303,7 +304,7 @@ func (l *Ledger) Execute(txList TransactionList, blk block.Entity) (result []byt
 		})
 
 		for _, s := range tx.TransactionResult.NewState {
-			kvList = append(kvList, kvDatabase.KVItem {
+			kvList = append(kvList, kvDatabase.KVItem{
 				Key:    s.Key,
 				Data:   s.NewVal,
 				Exists: true,
@@ -313,7 +314,7 @@ func (l *Ledger) Execute(txList TransactionList, blk block.Entity) (result []byt
 
 	err = l.Storage.BatchPut(kvList)
 	if err != nil {
-		return 
+		return
 	}
 
 	l.removeTransactionsFromPool(txList.Transactions)
@@ -341,7 +342,7 @@ func (l Ledger) GetTransactionsFromPool(blk block.Entity) (txList TransactionLis
 		return
 	}
 
-	resultCache := txResultCache {
+	resultCache := txResultCache{
 		CachedBlockGasKey: &txResultCacheData{
 			gasLeft: constTransactionGasLimit().Uint64(),
 		},
@@ -389,10 +390,10 @@ func (l *Ledger) DoQuery(req QueryRequest) (interface{}, error) {
 
 func NewLedger(tools crypto.Tools, driver kvDatabase.IDriver) *Ledger {
 	l := &Ledger{
-		txPool:        map[string] *Transaction{},
-		txPoolRecord:  []string {},
+		txPool:        map[string]*Transaction{},
+		txPoolRecord:  []string{},
 		txPoolLimit:   1000,
-		clientTxCount: map[string] int{},
+		clientTxCount: map[string]int{},
 		clientTxLimit: 4,
 		operateLock:   sync.RWMutex{},
 		poolLock:      sync.Mutex{},
@@ -403,15 +404,15 @@ func NewLedger(tools crypto.Tools, driver kvDatabase.IDriver) *Ledger {
 
 	l.storageForEVM.basedLedger = l
 	l.preActuators = map[string]txPreActuator{
-		TxType.Transfer.String(): l.preTransfer,
+		TxType.Transfer.String():       l.preTransfer,
 		TxType.CreateContract.String(): l.preContractCreation,
-		TxType.ContractCall.String(): l.preContractCall,
+		TxType.ContractCall.String():   l.preContractCall,
 	}
 
 	l.queryActuators = map[string]queryActuator{
-		QueryTypes.BaseAssets.String(): l.queryBaseAssets,
-		QueryTypes.Balance.String(): l.queryBalance,
-		QueryTypes.Transaction.String(): l.queryTransaction,
+		QueryTypes.BaseAssets.String():   l.queryBaseAssets,
+		QueryTypes.Balance.String():      l.queryBalance,
+		QueryTypes.Transaction.String():  l.queryTransaction,
 		QueryTypes.OffChainCall.String(): l.contractOffChainCall,
 	}
 
