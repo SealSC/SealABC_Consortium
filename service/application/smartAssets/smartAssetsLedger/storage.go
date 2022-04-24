@@ -26,10 +26,11 @@ import (
 	"github.com/SealSC/SealEVM/evmInt256"
 )
 
-const ContractAddressLen = 24
+const ContractAddressLen = 20
 
 func ContractAddressPrefix() []byte {
-	return []byte("SC:")
+	//return []byte("SC:")
+	return nil
 }
 
 var StoragePrefixes struct {

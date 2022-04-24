@@ -8,10 +8,12 @@ import (
 	"encoding/asn1"
 	"encoding/hex"
 	"errors"
+	"math/big"
+
+	"github.com/SealSC/SealABC/crypto/hashes/sm3"
 	"github.com/SealSC/SealABC/crypto/signers/signerCommon"
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/d5c5ceb0/sm_crypto_golang/sm2"
-	"math/big"
 )
 
 const algorithmName = "sm2"
@@ -103,6 +105,15 @@ func (k keyPair) toBtcecPublickey() btcec.PublicKey {
 	pub.X = k.PublicKey.X
 	pub.Y = k.PublicKey.Y
 	return pub
+}
+
+func (k *keyPair) ToAddress() string {
+	digest := sm3.Sm3.Sum(k.PublicKeyBytes()[1:])[12:]
+	return hex.EncodeToString(digest)
+}
+
+func (k *keyPair) ToAddressBytes() []byte {
+	return sm3.Sm3.Sum(k.PublicKeyBytes()[1:])[12:]
 }
 
 type keyGenerator struct{}

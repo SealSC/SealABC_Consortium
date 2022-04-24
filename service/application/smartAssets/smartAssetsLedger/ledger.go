@@ -27,6 +27,7 @@ import (
 
 	"github.com/SealSC/SealABC/common/utility/serializer/structSerializer"
 	"github.com/SealSC/SealABC/crypto"
+	"github.com/SealSC/SealABC/crypto/signers"
 	"github.com/SealSC/SealABC/dataStructure/enum"
 	"github.com/SealSC/SealABC/dataStructure/merkleTree"
 	"github.com/SealSC/SealABC/metadata/block"
@@ -149,7 +150,17 @@ func (l *Ledger) AddTx(req blockchainRequest.Entity) ([]byte, error) {
 		return nil, errors.New("transaction type is not equal to block request action")
 	}
 
-	if !bytes.Equal(tx.From, tx.DataSeal.SignerPublicKey) {
+	signerGen := signers.SignerGeneratorByAlgorithmType(tx.DataSeal.SignerAlgorithm)
+	if signerGen == nil {
+		return nil, errors.New("unsupported signature algorithm:" + tx.DataSeal.SignerAlgorithm)
+	}
+
+	signer, err := signerGen.FromRawPublicKey(tx.DataSeal.SignerPublicKey)
+	if err != nil {
+		return nil, errors.New("invalid seal's public key")
+	}
+
+	if !bytes.Equal(tx.From, signer.ToAddressBytes()) {
 		return nil, errors.New("invalid sender")
 	}
 

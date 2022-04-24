@@ -18,13 +18,14 @@
 package account
 
 import (
+	"encoding/json"
+	"errors"
+	"io/ioutil"
+
 	"github.com/SealSC/SealABC/crypto/ciphers"
 	"github.com/SealSC/SealABC/crypto/ciphers/cipherCommon"
 	"github.com/SealSC/SealABC/crypto/kdf/pbkdf2"
 	"github.com/SealSC/SealABC/crypto/signers"
-	"encoding/json"
-	"errors"
-	"io/ioutil"
 )
 
 func (s SealAccount) Store(filename string, password string, cipher ciphers.ICipher) (encrypted Encrypted, err error) {
@@ -47,7 +48,7 @@ func (s SealAccount) Store(filename string, password string, cipher ciphers.ICip
 
 	encrypted.Address = s.Address
 	encrypted.Data = encData
-	encrypted.Config = StoreConfig {
+	encrypted.Config = StoreConfig{
 		CipherType:  cipher.Type(),
 		CipherParam: []byte(encMode),
 		KDFType:     pbkdf2.Generator.Name(),
@@ -61,7 +62,6 @@ func (s SealAccount) Store(filename string, password string, cipher ciphers.ICip
 		return
 	}
 
-
 	err = ioutil.WriteFile(filename, fileData, 0666)
 	return
 }
@@ -72,7 +72,7 @@ func (s *SealAccount) FromStore(filename string, password string) (sa SealAccoun
 		return
 	}
 
-	encAccount := Encrypted {}
+	encAccount := Encrypted{}
 	err = json.Unmarshal(data, &encAccount)
 	if err != nil {
 		return
@@ -109,7 +109,7 @@ func (s *SealAccount) FromStore(filename string, password string) (sa SealAccoun
 		return
 	}
 
-	if signer.PublicKeyString() != encAccount.Address {
+	if signer.ToAddress() != encAccount.Address {
 		err = errors.New("address not equal")
 		return
 	}
@@ -119,4 +119,3 @@ func (s *SealAccount) FromStore(filename string, password string) (sa SealAccoun
 	sa.Signer = signer
 	return
 }
-

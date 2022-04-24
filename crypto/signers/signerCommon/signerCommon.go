@@ -1,8 +1,8 @@
 package signerCommon
 
-type KeyPair struct{
-	PrivateKey  interface{}
-	PublicKey   interface{}
+type KeyPair struct {
+	PrivateKey interface{}
+	PublicKey  interface{}
 }
 
 type ISigner interface {
@@ -15,8 +15,11 @@ type ISigner interface {
 	PublicKeyString() (key string)
 	PrivateKeyString() (key string)
 
-	PublicKeyBytes() (key [] byte)
+	PublicKeyBytes() (key []byte)
 	PrivateKeyBytes() (key []byte)
 
 	PublicKeyCompare(k interface{}) (equal bool)
+
+	ToAddress() string
+	ToAddressBytes() []byte
 }
