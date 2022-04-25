@@ -23,7 +23,8 @@ import (
 )
 
 func (l *Ledger) queryBaseAssets(_ QueryRequest) (interface{}, error) {
-	return l.genesisAssets, nil
+	ret, _, err := l.getSystemAssets()
+	return ret, err
 }
 
 func (l *Ledger) queryBalance(req QueryRequest) (interface{}, error) {
@@ -41,7 +42,7 @@ func (l *Ledger) queryBalance(req QueryRequest) (interface{}, error) {
 	if err != nil {
 		return nil, Errors.DBError.NewErrorWithNewMessage(err.Error())
 	}
-	
+
 	return balance.String(), nil
 }
 
@@ -74,7 +75,7 @@ func (l *Ledger) contractOffChainCall(req QueryRequest) (interface{}, error) {
 		return nil, Errors.InvalidParameter.NewErrorWithNewMessage(err.Error())
 	}
 
-	resultCache := txResultCache {
+	resultCache := txResultCache{
 		CachedBlockGasKey: &txResultCacheData{
 			gasLeft: constTransactionGasLimit().Uint64(),
 		},
