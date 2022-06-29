@@ -201,6 +201,11 @@ func (b *basicService) verifyNewViewMessage(consensusData SignedConsensusData) (
 func (b *basicService) verifyPrepareMessage(consensusData SignedConsensusData) (passed bool) {
     passed = false
 
+    if b.currentPhase.Int() > consensusPhases.Prepare.Int() {
+        passed = true
+        return
+    }
+
     //verify view
     justify := consensusData.Justify
     if justify.ViewNumber > consensusData.ViewNumber {

@@ -45,6 +45,29 @@ type consensusPhase struct {
     PreCommit   enum.Element
     Commit      enum.Element
     Decide      enum.Element
+    END         enum.Element
+}
+
+func (c consensusPhase) IntValOf(s string) (v int) {
+    switch s {
+    case c.NewView.String():
+        return c.NewView.Int()
+
+    case c.Prepare.String():
+        return c.Prepare.Int()
+
+    case c.PreCommit.String():
+        return c.PreCommit.Int()
+
+    case c.Commit.String():
+        return c.Commit.Int()
+
+    case c.Decide.String():
+        return c.Decide.Int()
+
+    default:
+        return c.END.Int()
+    }
 }
 
 var consensusPhases consensusPhase

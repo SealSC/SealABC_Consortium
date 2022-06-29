@@ -39,6 +39,7 @@ import (
     "github.com/SealSC/SealABC/dataStructure/enum"
     "github.com/SealSC/SealABC/log"
     "github.com/SealSC/SealABC/metadata/message"
+    "time"
 )
 
 func (b *basicService) pickHighQC() (highQC QC) {
@@ -89,6 +90,10 @@ func (b *basicService) getNextPhaseAndMsgType() (phase enum.Element, msgType enu
 }
 
 func (b *basicService) gotVote(consensusData SignedConsensusData) (reply *message.Message) {
+    if b.currentPhase.String() != consensusData.Phase {
+        return
+    }
+
     if !b.verifyVoteMessage(consensusData) {
         return
     }
@@ -149,15 +154,16 @@ func (b *basicService) gotNewView(consensusData SignedConsensusData) (_ *message
     singer, _ := b.config.SingerGenerator.FromRawPublicKey(consensusData.Seal.SignerPublicKey)
     b.newViews[singer.PublicKeyString()] = consensusData
 
+    return
+}
+
+func (b *basicService) startLeadingConsensus() {
+    time.Sleep(b.config.ConsensusInterval)
+
     if !b.hasEnoughVotes(len(b.newViews)) {
         return
     }
 
-    //if consensusData.ViewNumber == b.currentView && b.currentPhase != consensusPhases.NewView {
-    //    return
-    //}
-
-    b.currentView = consensusData.ViewNumber
     highQC := b.pickHighQC()
 
     prepareMsg, err := b.buildPrepareMessage(highQC)
@@ -170,7 +176,6 @@ func (b *basicService) gotNewView(consensusData SignedConsensusData) (_ *message
     b.newViews = map[string]SignedConsensusData{}
     b.currentPhase = consensusPhases.Prepare
     b.broadCastMessage(prepareMsg)
-    return
 }
 
 func (b *basicService) registerLeaderProcessor() {
