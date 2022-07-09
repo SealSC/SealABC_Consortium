@@ -38,7 +38,6 @@ import (
     "github.com/SealSC/SealABC/consensus"
     "github.com/SealSC/SealABC/log"
     "github.com/SealSC/SealABC/metadata/message"
-    "time"
 )
 
 func (b *basicService) gotPrepare(consensusData SignedConsensusData) (reply *message.Message) {
@@ -46,15 +45,15 @@ func (b *basicService) gotPrepare(consensusData SignedConsensusData) (reply *mes
         return
     }
 
+    if b.currentView < consensusData.ViewNumber {
+        b.currentView = consensusData.ViewNumber
+        log.Log.Warn("local view is lower then network view, set view to network view")
+    }
+
     voteMsg, err := b.buildVoteMessage(consensusData.Phase, consensusData.Payload)
     if err != nil {
         log.Log.Error("build vote message failed")
         return
-    }
-
-    if b.currentView != consensusData.ViewNumber {
-        b.currentView = consensusData.ViewNumber
-        log.Log.Warn("local view is not equal network view, but everything on network seems ok, so we sync local view to network view.")
     }
 
     b.currentPhase = consensusPhases.Prepare
@@ -80,6 +79,10 @@ func (b *basicService)processCommonPhaseMessage(consensusData ConsensusData) {
 }
 
 func (b *basicService) gotCommonPhaseMessage(consensusData SignedConsensusData) (reply *message.Message) {
+    if b.isCurrentLeader() {
+        return
+    }
+
     validPhase := b.verifyPhase(consensusData.ConsensusData)
     if !validPhase {
         return
@@ -92,20 +95,11 @@ func (b *basicService) gotCommonPhaseMessage(consensusData SignedConsensusData) 
             b.externalProcessor.EventProcessor(consensus.Event.Success, consensusData.Justify.Payload.CustomerData)
         }
 
+        b.currentPhase = consensusPhases.NewView
         b.currentView += 1
-        //log.Log.Println("consensus success! need send new view to next leader @view ", b.currentView)
-        b.viewChangeTrigger.Reset(b.config.ConsensusTimeout)
+        b.newRound()
 
-        newView := b.currentView
-        go func() {
-            time.Sleep(b.config.ConsensusInterval)
-            b.phaseLock.Lock()
-            defer b.phaseLock.Unlock()
-            if b.currentView != newView {
-                return
-            }
-            b.newRound()
-        }()
+        //log.Log.Println("consensus success! need send new view to next leader @view ", b.currentView)
 
         return
     }

@@ -35,14 +35,14 @@
 package hotStuff
 
 import (
+    "bytes"
+    "encoding/json"
+    "errors"
     "github.com/SealSC/SealABC/consensus"
     "github.com/SealSC/SealABC/dataStructure/enum"
     "github.com/SealSC/SealABC/log"
     "github.com/SealSC/SealABC/metadata/message"
     "github.com/SealSC/SealABC/network"
-    "bytes"
-    "encoding/json"
-    "errors"
     "sync"
     "time"
 )
@@ -122,10 +122,13 @@ func (b *basicService) newRound() {
             log.Log.Error("build new view message failed.")
             return
         }
+        log.Log.Println("i am the replica @view ", b.currentView)
+
         go b.sendMessageToLeader(newViewMsg)
         return
     } else {
-        //log.Log.Println("i am the leader @view ", b.currentView, " use public key: ", b.config.SelfSigner.PublicKeyString())
+        log.Log.Println("i am the leader  @view ", b.currentView)
+        go b.startLeadingConsensus()
     }
 }
 
@@ -188,7 +191,6 @@ func (b *basicService) initService() {
 
     b.phaseLock.Lock()
     defer b.phaseLock.Unlock()
-    time.Sleep(time.Millisecond * 100)
     go b.startViewChangeMonitor()
 
     b.newRound()
@@ -224,6 +226,9 @@ func (b *basicService) Feed(msg message.Message) (reply *message.Message) {
     b.phaseLock.Lock()
     defer b.phaseLock.Unlock()
 
+    if consensusData.ViewNumber < b.currentView {
+        return
+    }
     //todo: modular log system
     //log.Log.Println("got message: ", msg.Type)
     if handle, exists := b.consensusProcessor[msg.Type]; exists {
