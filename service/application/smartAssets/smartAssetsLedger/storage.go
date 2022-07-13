@@ -18,8 +18,8 @@
 package smartAssetsLedger
 
 import (
+	"bytes"
 	"errors"
-
 	"github.com/SealSC/SealABC/common/utility/serializer/structSerializer"
 	"github.com/SealSC/SealABC/dataStructure/enum"
 	"github.com/SealSC/SealEVM/environment"
@@ -83,10 +83,12 @@ func (l *Ledger) getTxFromStorage(hash []byte) (tx *Transaction, exists bool, er
 
 type contractStorage struct {
 	basedLedger *Ledger
+	txRetCache  *txResultCache
+	stateCache  *[]StateData
 }
 
 func (c *contractStorage) GetBalance(address *evmInt256.Int) (*evmInt256.Int, error) {
-	balance, err := c.basedLedger.BalanceOf(address.Bytes())
+	balance, err := c.basedLedger.getBalance(address.Bytes(), *c.txRetCache)
 
 	var ret *evmInt256.Int
 	if err == nil {
@@ -96,7 +98,7 @@ func (c *contractStorage) GetBalance(address *evmInt256.Int) (*evmInt256.Int, er
 }
 
 func (c *contractStorage) CanTransfer(from, to, val *evmInt256.Int) bool {
-	balance, err := c.basedLedger.BalanceOf(from.Bytes())
+	balance, err := c.basedLedger.getBalance(from.Bytes(), *c.txRetCache)
 	if err != nil {
 		return false
 	}
@@ -193,8 +195,7 @@ func (c *contractStorage) CreateFixedAddress(caller *evmInt256.Int, salt *evmInt
 	return ret
 }
 
-func (c *contractStorage) Load(n string, k string) (*evmInt256.Int, error) {
-	key := BuildKey(StoragePrefixes.ContractData, []byte(n), []byte(k))
+func (c contractStorage) loadFromLocal(key []byte) (*evmInt256.Int, error) {
 	data, err := c.basedLedger.Storage.Get(key)
 
 	if err != nil {
@@ -204,6 +205,38 @@ func (c *contractStorage) Load(n string, k string) (*evmInt256.Int, error) {
 	ret := evmInt256.New(0)
 	if data.Exists {
 		ret.SetBytes(data.Data)
+	}
+
+	return ret, nil
+}
+
+func (c contractStorage) loadFromCache(key []byte) *evmInt256.Int {
+	if c.stateCache == nil {
+		return nil
+	}
+
+	for _, v := range *c.stateCache {
+		if bytes.Equal(v.Key, key) {
+			ret := evmInt256.New(0)
+			ret.SetBytes(v.NewVal)
+			return ret
+		}
+	}
+
+	return nil
+}
+
+func (c *contractStorage) clearCache() {
+	c.txRetCache = nil
+	c.stateCache = nil
+}
+
+func (c *contractStorage) Load(n string, k string) (*evmInt256.Int, error) {
+	key := BuildKey(StoragePrefixes.ContractData, []byte(n), []byte(k))
+
+	ret := c.loadFromCache(key)
+	if ret == nil {
+		return c.loadFromLocal(key)
 	}
 
 	return ret, nil

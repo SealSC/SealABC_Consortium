@@ -225,7 +225,7 @@ func (l Ledger) txResultCheck(orgResult TransactionResult, execResult Transactio
 	return nil
 }
 
-func (l Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []byte, err error) {
+func (l *Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []byte, err error) {
 	l.poolLock.Lock()
 	defer l.poolLock.Unlock()
 
@@ -243,6 +243,8 @@ func (l Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []b
 			Data: nil,
 		},
 	}
+
+	l.storageForEVM.txRetCache = &resultCache
 
 	for _, tx := range txList.Transactions {
 		hash := string(tx.DataSeal.Hash)
@@ -262,7 +264,7 @@ func (l Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []b
 			newState, _, execErr := preExec(tx, resultCache, blk)
 			txForCheck := Transaction{}
 			l.setTxNewState(execErr, newState, &txForCheck)
-
+			l.storageForEVM.stateCache = &newState
 			checkErr := l.txResultCheck(tx.TransactionResult, txForCheck.TransactionResult, tx.getHash())
 			if checkErr != nil {
 				err = checkErr
@@ -270,6 +272,8 @@ func (l Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []b
 			}
 		}
 	}
+
+	l.storageForEVM.clearCache()
 
 	return
 }
@@ -344,7 +348,7 @@ func (l Ledger) setTxNewState(err error, newState []StateData, tx *Transaction) 
 	}
 }
 
-func (l Ledger) GetTransactionsFromPool(blk block.Entity) (txList TransactionList, count uint32, txRoot []byte) {
+func (l *Ledger) GetTransactionsFromPool(blk block.Entity) (txList TransactionList, count uint32, txRoot []byte) {
 	l.poolLock.Lock()
 	defer l.poolLock.Unlock()
 
@@ -368,6 +372,7 @@ func (l Ledger) GetTransactionsFromPool(blk block.Entity) (txList TransactionLis
 	}
 
 	mt := merkleTree.Tree{}
+	l.storageForEVM.txRetCache = &resultCache
 
 	for idx, txHashStr := range l.txPoolRecord {
 		tx := l.txPool[txHashStr]
@@ -378,6 +383,7 @@ func (l Ledger) GetTransactionsFromPool(blk block.Entity) (txList TransactionLis
 			newState, _, err := preExec(*tx, resultCache, blk)
 			l.setTxNewState(err, newState, tx)
 			tx.SequenceNumber = uint32(idx)
+			l.storageForEVM.stateCache = &newState
 
 			tx.TransactionResult.ReturnData = resultCache[CachedContractReturnData].Data
 			tx.TransactionResult.NewAddress = resultCache[CachedContractCreationAddress].address
@@ -387,6 +393,7 @@ func (l Ledger) GetTransactionsFromPool(blk block.Entity) (txList TransactionLis
 	}
 
 	txRoot, _ = mt.Calculate()
+	l.storageForEVM.clearCache()
 
 	return
 }
@@ -405,7 +412,7 @@ func NewLedger(tools crypto.Tools, driver kvDatabase.IDriver) *Ledger {
 		txPoolRecord:  []string{},
 		txPoolLimit:   1000,
 		clientTxCount: map[string]int{},
-		clientTxLimit: 4,
+		clientTxLimit: 100,
 		operateLock:   sync.RWMutex{},
 		poolLock:      sync.Mutex{},
 		genesisAssets: BaseAssets{},
