@@ -18,5 +18,6 @@
 package cliFlags
 
 const (
-	Config = "config"
+	Config   = "config"
+	Password = "password"
 )

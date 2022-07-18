@@ -19,20 +19,21 @@ package cli
 
 import (
 	"errors"
+
 	"github.com/SealSC/SealABC/cli/cliFlags"
 	cliV2 "github.com/urfave/cli/v2"
 )
 
 func SetAction(app *cliV2.App) {
 	app.Action = func(c *cliV2.Context) error {
-		cfgFile := c.String(cliFlags.Config)
-
 		//config file
+		cfgFile := c.String(cliFlags.Config)
 		if "" == cfgFile {
 			return errors.New("must set config file")
 		}
 
 		Parameters.ConfigFile = cfgFile
+		Parameters.Password = c.String(cliFlags.Password)
 
 		return nil
 	}

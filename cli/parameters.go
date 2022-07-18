@@ -19,8 +19,10 @@ package cli
 
 type parameters struct {
 	ConfigFile string
+	Password   string
 }
 
 var Parameters = parameters{
+	"",
 	"",
 }

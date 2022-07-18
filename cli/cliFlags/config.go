@@ -25,7 +25,18 @@ func newConfigFlag() cliV2.Flag {
 	return &(cliV2.StringFlag{
 		Name:     Config,
 		Usage:    "set config file name",
+		Aliases:  []string{"c"},
 		Hidden:   false,
 		Required: true,
+	})
+}
+
+func newPasswordFlag() cliV2.Flag {
+	return &(cliV2.StringFlag{
+		Name:     Password,
+		Usage:    "set password",
+		Aliases:  []string{"p"},
+		Hidden:   false,
+		Required: false,
 	})
 }

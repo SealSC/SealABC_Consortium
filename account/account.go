@@ -24,8 +24,10 @@ import (
 )
 
 const encryptedKeyLen = 32
+const encryptedKeyLenSm4 = 16
 
 type StoreConfig struct {
+	SignerType  string
 	CipherType  string
 	CipherParam []byte
 
@@ -37,9 +39,11 @@ type StoreConfig struct {
 }
 
 type Encrypted struct {
-	Address string
-	Data    cipherCommon.EncryptedData
-	Config  StoreConfig
+	Address    string
+	PublicKey  string
+	SignerType string
+	Data       cipherCommon.EncryptedData
+	Config     StoreConfig
 }
 
 type accountDataForEncrypt struct {
@@ -54,7 +58,12 @@ type SealAccount struct {
 }
 
 func NewAccount(privateKey []byte, sg signers.ISignerGenerator) (sa SealAccount, err error) {
-	signer, err := sg.NewSigner(privateKey)
+	var signer signerCommon.ISigner
+	if privateKey != nil {
+		signer, err = sg.FromRawPrivateKey(privateKey)
+	} else {
+		signer, err = sg.NewSigner(nil)
+	}
 
 	if err != nil {
 		return

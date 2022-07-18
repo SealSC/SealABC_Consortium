@@ -24,5 +24,6 @@ import (
 func SetFlags(app *cliV2.App) {
 	app.Flags = []cliV2.Flag{
 		newConfigFlag(),
+		newPasswordFlag(),
 	}
 }

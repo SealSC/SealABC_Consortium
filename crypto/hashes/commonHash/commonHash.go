@@ -20,8 +20,9 @@ package commonHash
 import (
 	"crypto/hmac"
 	"encoding/hex"
-	"github.com/SealSC/SealABC/log"
 	"hash"
+
+	"github.com/SealSC/SealABC/log"
 )
 
 type hashMethod func() hash.Hash

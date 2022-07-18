@@ -24,6 +24,7 @@ import (
 
 	"github.com/SealSC/SealABC/crypto/ciphers"
 	"github.com/SealSC/SealABC/crypto/ciphers/cipherCommon"
+	"github.com/SealSC/SealABC/crypto/ciphers/sm4"
 	"github.com/SealSC/SealABC/crypto/kdf/pbkdf2"
 	"github.com/SealSC/SealABC/crypto/signers"
 )
@@ -31,11 +32,17 @@ import (
 func (s SealAccount) Store(filename string, password string, cipher ciphers.ICipher) (encrypted Encrypted, err error) {
 	dataForEnc := accountDataForEncrypt{}
 	dataForEnc.SignerType = s.SingerType
-	dataForEnc.KeyData = s.Signer.KeyPairData()
+	dataForEnc.KeyData = s.Signer.PrivateKeyBytes()
 
 	dataBytes, _ := json.Marshal(dataForEnc)
 
-	key, keySalt, kdfParam, err := pbkdf2.Generator.NewKey([]byte(password), encryptedKeyLen)
+	//TODO temp modify
+	keylen := encryptedKeyLen
+	if cipher.Type() == sm4.Sm4.Type() {
+		keylen = encryptedKeyLenSm4
+	}
+
+	key, keySalt, kdfParam, err := pbkdf2.Generator.NewKey([]byte(password), keylen)
 	if err != nil {
 		return
 	}
@@ -47,6 +54,8 @@ func (s SealAccount) Store(filename string, password string, cipher ciphers.ICip
 	}
 
 	encrypted.Address = s.Address
+	encrypted.PublicKey = s.Signer.PublicKeyString()
+	encrypted.SignerType = s.SingerType
 	encrypted.Data = encData
 	encrypted.Config = StoreConfig{
 		CipherType:  cipher.Type(),
@@ -54,7 +63,7 @@ func (s SealAccount) Store(filename string, password string, cipher ciphers.ICip
 		KDFType:     pbkdf2.Generator.Name(),
 		KDFSalt:     keySalt,
 		KDFParam:    kdfParam,
-		KeyLength:   encryptedKeyLen,
+		KeyLength:   keylen,
 	}
 
 	fileData, err := json.MarshalIndent(encrypted, "", "    ")
@@ -66,12 +75,11 @@ func (s SealAccount) Store(filename string, password string, cipher ciphers.ICip
 	return
 }
 
-func (s *SealAccount) FromStore(filename string, password string) (sa SealAccount, err error) {
+func FromStore(filename string, password string) (sa SealAccount, err error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return
 	}
-
 	encAccount := Encrypted{}
 	err = json.Unmarshal(data, &encAccount)
 	if err != nil {
@@ -103,8 +111,8 @@ func (s *SealAccount) FromStore(filename string, password string) (sa SealAccoun
 		return
 	}
 
-	sg := signers.SignerGeneratorByAlgorithmType(s.SingerType)
-	signer, err := sg.FromKeyPairData(saForEnc.KeyData)
+	sg := signers.SignerGeneratorByAlgorithmType(saForEnc.SignerType)
+	signer, err := sg.FromRawPrivateKey(saForEnc.KeyData)
 	if err != nil {
 		return
 	}
