@@ -35,93 +35,92 @@
 package hotStuff
 
 import (
-    "github.com/SealSC/SealABC/consensus"
-    "github.com/SealSC/SealABC/log"
-    "github.com/SealSC/SealABC/metadata/message"
+	"github.com/SealSC/SealABC/consensus"
+	"github.com/SealSC/SealABC/log"
+	"github.com/SealSC/SealABC/metadata/message"
 )
 
 func (b *basicService) gotPrepare(consensusData SignedConsensusData) (reply *message.Message) {
-    if !b.verifyPrepareMessage(consensusData) {
-        return
-    }
+	if !b.verifyPrepareMessage(consensusData) {
+		return
+	}
 
-    if b.currentView < consensusData.ViewNumber {
-        b.currentView = consensusData.ViewNumber
-        log.Log.Warn("local view is lower then network view, set view to network view")
-    }
+	if b.currentView < consensusData.ViewNumber {
+		b.currentView = consensusData.ViewNumber
+		log.Log.Warn("local view is lower then network view, set view to network view")
+	}
 
-    voteMsg, err := b.buildVoteMessage(consensusData.Phase, consensusData.Payload)
-    if err != nil {
-        log.Log.Error("build vote message failed")
-        return
-    }
+	voteMsg, err := b.buildVoteMessage(consensusData.Phase, consensusData.Payload)
+	if err != nil {
+		log.Log.Error("build vote message failed")
+		return
+	}
 
-    b.currentPhase = consensusPhases.Prepare
-    b.viewChangeTrigger.Reset(b.config.ConsensusTimeout)
-    b.sendMessageToLeader(voteMsg)
-    return
+	b.currentPhase = consensusPhases.Prepare
+	b.viewChangeTrigger.Reset(b.config.ConsensusTimeout)
+	b.sendMessageToLeader(voteMsg)
+	return
 }
 
-func (b *basicService)processCommonPhaseMessage(consensusData ConsensusData) {
-    allPhases :=  consensusPhases
-    switch consensusData.Phase {
-    case allPhases.PreCommit.String():
-        b.prepareQC = &consensusData.Justify
-        b.currentPhase = allPhases.PreCommit
+func (b *basicService) processCommonPhaseMessage(consensusData ConsensusData) {
+	allPhases := consensusPhases
+	switch consensusData.Phase {
+	case allPhases.PreCommit.String():
+		b.prepareQC = &consensusData.Justify
+		b.currentPhase = allPhases.PreCommit
 
-    case allPhases.Commit.String():
-        b.lockedQC = &consensusData.Justify
-        b.currentPhase = allPhases.Commit
+	case allPhases.Commit.String():
+		b.lockedQC = &consensusData.Justify
+		b.currentPhase = allPhases.Commit
 
-    case allPhases.Decide.String():
-        b.currentPhase = allPhases.Decide
-    }
+	case allPhases.Decide.String():
+		b.currentPhase = allPhases.Decide
+	}
 }
 
 func (b *basicService) gotCommonPhaseMessage(consensusData SignedConsensusData) (reply *message.Message) {
-    if b.isCurrentLeader() {
-        return
-    }
+	if b.isCurrentLeader() {
+		return
+	}
 
-    validPhase := b.verifyPhase(consensusData.ConsensusData)
-    if !validPhase {
-        return
-    }
+	validPhase := b.verifyPhase(consensusData.ConsensusData)
+	if !validPhase {
+		return
+	}
 
-    b.processCommonPhaseMessage(consensusData.ConsensusData)
+	b.processCommonPhaseMessage(consensusData.ConsensusData)
 
-    if b.currentPhase == consensusPhases.Decide {
-        if b.externalProcessor != nil {
-            b.externalProcessor.EventProcessor(consensus.Event.Success, consensusData.Justify.Payload.CustomerData)
-        }
+	if b.currentPhase == consensusPhases.Decide {
+		if b.externalProcessor != nil {
+			b.externalProcessor.EventProcessor(consensus.Event.Success, consensusData.Justify.Payload.CustomerData)
+		}
 
-        b.currentPhase = consensusPhases.NewView
-        b.currentView += 1
-        b.newRound()
+		b.currentPhase = consensusPhases.NewView
+		b.currentView += 1
+		b.newRound()
 
-        //log.Log.Println("consensus success! need send new view to next leader @view ", b.currentView)
+		//log.Log.Println("consensus success! need send new view to next leader @view ", b.currentView)
 
-        return
-    }
+		return
+	}
 
-    //log.Log.Println("common phase verify success, start build vote message in phase ", consensusData.Phase)
-    voteMsg, err := b.buildVoteMessage(consensusData.Phase, consensusData.Justify.Payload)
-    if err != nil {
-        log.Log.Error("build vote message failed")
-        return
-    }
-    b.viewChangeTrigger.Reset(b.config.ConsensusTimeout)
+	//log.Log.Println("common phase verify success, start build vote message in phase ", consensusData.Phase)
+	voteMsg, err := b.buildVoteMessage(consensusData.Phase, consensusData.Justify.Payload)
+	if err != nil {
+		log.Log.Error("build vote message failed")
+		return
+	}
+	b.viewChangeTrigger.Reset(b.config.ConsensusTimeout)
 
-    //log.Log.Println("build vote message in phase ", consensusData.Phase, " over")
+	//log.Log.Println("build vote message in phase ", consensusData.Phase, " over")
 
-    b.sendMessageToLeader(voteMsg)
-    return
+	b.sendMessageToLeader(voteMsg)
+	return
 }
 
-
 func (b *basicService) registerReplicaProcessor() {
-    b.consensusProcessor[messageTypes.Prepare.String()] = b.gotPrepare
-    b.consensusProcessor[messageTypes.PreCommit.String()] = b.gotCommonPhaseMessage
-    b.consensusProcessor[messageTypes.Commit.String()] = b.gotCommonPhaseMessage
-    b.consensusProcessor[messageTypes.Decide.String()] = b.gotCommonPhaseMessage
+	b.consensusProcessor[messageTypes.Prepare.String()] = b.gotPrepare
+	b.consensusProcessor[messageTypes.PreCommit.String()] = b.gotCommonPhaseMessage
+	b.consensusProcessor[messageTypes.Commit.String()] = b.gotCommonPhaseMessage
+	b.consensusProcessor[messageTypes.Decide.String()] = b.gotCommonPhaseMessage
 }

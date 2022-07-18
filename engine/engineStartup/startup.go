@@ -18,42 +18,41 @@
 package engineStartup
 
 import (
-    "github.com/SealSC/SealABC/log"
-    "github.com/SealSC/SealABC/consensus/hotStuff"
-    "github.com/SealSC/SealABC/engine/engineApi"
-    "github.com/SealSC/SealABC/engine/engineService"
-    //"github.com/SealSC/SealABC/service/system"
+	"github.com/SealSC/SealABC/consensus/hotStuff"
+	"github.com/SealSC/SealABC/engine/engineApi"
+	"github.com/SealSC/SealABC/engine/engineService"
+	"github.com/SealSC/SealABC/log"
+	//"github.com/SealSC/SealABC/service/system"
 )
 
 func Start(cfg Config) (err error) {
-    //load config first
-    loadConfig(cfg)
+	//load config first
+	loadConfig(cfg)
 
-    //set up logger for the system
-    if log.Log == nil {
-        log.SetUpLogger(config.Log)
-    }
+	//set up logger for the system
+	if log.Log == nil {
+		log.SetUpLogger(config.Log)
+	}
 
-    //load storage
-    loadStorage()
+	//load storage
+	loadStorage()
 
-    //start consensus network
-    consensusNetwork, _ := startConsensusNetwork()
+	//start consensus network
+	consensusNetwork, _ := startConsensusNetwork()
 
-    //start system service
-    startSystemService()
+	//start system service
+	startSystemService()
 
-    engineApi.Start(config.Api)
+	engineApi.Start(config.Api)
 
+	//start consensus
+	if !config.ConsensusDisabled {
+		err = startConsensus(&hotStuff.Basic, consensusNetwork, &engineService.ConsensusProcessor)
+		if err != nil {
+			return
+		}
+	}
 
-    //start consensus
-    if !config.ConsensusDisabled {
-        err = startConsensus(&hotStuff.Basic, consensusNetwork, &engineService.ConsensusProcessor)
-        if err != nil {
-            return
-        }
-    }
-
-    engineService.SetConsensusInformation(&hotStuff.Basic)
-    return
+	engineService.SetConsensusInformation(&hotStuff.Basic)
+	return
 }

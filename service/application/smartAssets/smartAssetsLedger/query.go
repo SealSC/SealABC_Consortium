@@ -26,7 +26,7 @@ var QueryTypes struct {
 	OffChainCall enum.Element
 }
 
-var QueryParameterFields struct{
+var QueryParameterFields struct {
 	Address enum.Element
 	TxHash  enum.Element
 	Data    enum.Element
@@ -34,5 +34,5 @@ var QueryParameterFields struct{
 
 type QueryRequest struct {
 	QueryType string
-	Parameter map[string] string
+	Parameter map[string]string
 }

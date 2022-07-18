@@ -35,67 +35,67 @@
 package hotStuff
 
 import (
-    "github.com/SealSC/SealABC/dataStructure/enum"
-    "github.com/SealSC/SealABC/metadata/seal"
+	"github.com/SealSC/SealABC/dataStructure/enum"
+	"github.com/SealSC/SealABC/metadata/seal"
 )
 
 type consensusPhase struct {
-    NewView     enum.Element
-    Prepare     enum.Element
-    PreCommit   enum.Element
-    Commit      enum.Element
-    Decide      enum.Element
-    END         enum.Element
+	NewView   enum.Element
+	Prepare   enum.Element
+	PreCommit enum.Element
+	Commit    enum.Element
+	Decide    enum.Element
+	END       enum.Element
 }
 
 func (c consensusPhase) IntValOf(s string) (v int) {
-    switch s {
-    case c.NewView.String():
-        return c.NewView.Int()
+	switch s {
+	case c.NewView.String():
+		return c.NewView.Int()
 
-    case c.Prepare.String():
-        return c.Prepare.Int()
+	case c.Prepare.String():
+		return c.Prepare.Int()
 
-    case c.PreCommit.String():
-        return c.PreCommit.Int()
+	case c.PreCommit.String():
+		return c.PreCommit.Int()
 
-    case c.Commit.String():
-        return c.Commit.Int()
+	case c.Commit.String():
+		return c.Commit.Int()
 
-    case c.Decide.String():
-        return c.Decide.Int()
+	case c.Decide.String():
+		return c.Decide.Int()
 
-    default:
-        return c.END.Int()
-    }
+	default:
+		return c.END.Int()
+	}
 }
 
 var consensusPhases consensusPhase
 
 type ConsensusPayload struct {
-    Parent       []byte
-    CustomerData []byte
+	Parent       []byte
+	CustomerData []byte
 }
 
 type QCData struct {
-    Phase      string
-    ViewNumber uint64
-    Payload    ConsensusPayload
+	Phase      string
+	ViewNumber uint64
+	Payload    ConsensusPayload
 }
 
 type QC struct {
-    QCData
-    Votes []seal.Entity
+	QCData
+	Votes []seal.Entity
 }
 
 type ConsensusData struct {
-    ViewNumber uint64
-    Phase      string
-    Payload    ConsensusPayload
-    Justify    QC
+	ViewNumber uint64
+	Phase      string
+	Payload    ConsensusPayload
+	Justify    QC
 }
 
 type SignedConsensusData struct {
-    ConsensusData
-    Seal seal.Entity
+	ConsensusData
+	Seal seal.Entity
 }

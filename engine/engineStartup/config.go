@@ -18,24 +18,24 @@
 package engineStartup
 
 import (
-    "github.com/SealSC/SealABC/engine/engineApi"
-    "github.com/SealSC/SealABC/log"
-    "github.com/SealSC/SealABC/network"
+	"github.com/SealSC/SealABC/engine/engineApi"
+	"github.com/SealSC/SealABC/log"
+	"github.com/SealSC/SealABC/network"
 )
 
 type Config struct {
-    Api         engineApi.Config
-    Log         log.Config
+	Api engineApi.Config
+	Log log.Config
 
-    ConsensusNetwork        network.Config
-    ConsensusDisabled       bool
+	ConsensusNetwork  network.Config
+	ConsensusDisabled bool
 
-    Consensus        interface{}
+	Consensus interface{}
 }
 
 var config Config
 
 func loadConfig(cfg Config) {
-    config = cfg
-    return
+	config = cfg
+	return
 }

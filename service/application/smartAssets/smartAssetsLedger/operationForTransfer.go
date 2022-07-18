@@ -33,7 +33,7 @@ func (l *Ledger) getBalance(addr []byte, cache txResultCache) (*big.Int, error) 
 	balance, err := l.BalanceOf(addr)
 	if err == nil {
 		cache[addrStr] = &txResultCacheData{
-			val:balance,
+			val: balance,
 		}
 	}
 
