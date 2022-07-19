@@ -18,43 +18,13 @@
 package smartAssets
 
 import (
-	"github.com/SealSC/SealABC/crypto"
-	"github.com/SealSC/SealABC/crypto/hashes/sha3"
-	"github.com/SealSC/SealABC/crypto/signers/ed25519"
 	commonCfg "github.com/SealSC/SealABC/metadata/applicationCommonConfig"
 	"github.com/SealSC/SealABC/service/application/smartAssets/smartAssetsLedger"
-	"github.com/SealSC/SealABC/storage/db/dbDrivers/levelDB"
-	"github.com/SealSC/SealABC/storage/db/dbInterface"
 )
 
 type Config struct {
 	commonCfg.Config
-	BaseAssets smartAssetsLedger.BaseAssetsData
-}
-
-func DefaultConfig() *Config {
-	return &Config{
-		Config: commonCfg.Config{
-			KVDBName: dbInterface.LevelDB,
-			KVDBConfig: levelDB.Config{
-				DBFilePath: "./smartAssets",
-			},
-
-			EnableSQLDB: false,
-			SQLStorage:  nil,
-
-			CryptoTools: crypto.Tools{
-				HashCalculator:  sha3.Sha256,
-				SignerGenerator: ed25519.SignerGenerator,
-			},
-		},
-
-		BaseAssets: smartAssetsLedger.BaseAssetsData{
-			Name:        "Seal Smart Token",
-			Symbol:      "SST",
-			Supply:      "1000000000", //one billion
-			Increasable: false,
-			Owner:       "",
-		},
-	}
+	BaseAssets    smartAssetsLedger.BaseAssetsData
+	TxPoolLimit   int
+	ClientTxLimit int
 }

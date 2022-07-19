@@ -18,9 +18,10 @@
 package hashes
 
 import (
+	"hash"
+
 	"github.com/SealSC/SealABC/crypto/hashes/sha3"
 	"github.com/SealSC/SealABC/crypto/hashes/sm3"
-	"hash"
 )
 
 var AllHash = map[string]IHashCalculator{
@@ -43,4 +44,8 @@ type IHashCalculator interface {
 func Load() {
 	sha3.Load()
 	sm3.Load()
+}
+
+func HashCalculatorByAlgorithmType(sType string) IHashCalculator {
+	return AllHash[sType]
 }
