@@ -57,7 +57,7 @@
     "smart_assets_enable": true,
     "smart_assets_db": "./demo/node2/db/smart_assets",
     "tx_pool_limit": 1000,
-    "client_pool_limit": 100
+    "client_tx_limit": 100
   },
   "mysql_conf": {
     "enable_sql_storage": false

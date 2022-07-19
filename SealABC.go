@@ -23,6 +23,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -81,8 +82,7 @@ func main() {
 
 	log.SetUpLogger(log.Config{
 		Level:   logrus.Level(config.StaticConfigs.LogConf.LogLevel),
-		LogFile: config.StaticConfigs.LogConf.LogFile,
-	})
+		LogFile: config.StaticConfigs.LogConf.LogFile})
 
 	//pprof
 	go func() {
@@ -188,6 +188,12 @@ func main() {
 
 	SealEVM.Load()
 
+	precision, err := strconv.Atoi(config.SmartAssetsPrecision)
+	if err != nil {
+		log.Log.Error(err)
+		return
+	}
+
 	saCfg := &smartAssets.Config{
 		Config: applicationCommonConfig.Config{
 			KVDBName: dbInterface.LevelDB,
@@ -201,12 +207,12 @@ func main() {
 		},
 
 		BaseAssets: smartAssetsLedger.BaseAssetsData{
-			Name:        config.StaticConfigs.SmartAssetsAppConf.SmartAssetsName,
-			Symbol:      config.StaticConfigs.SmartAssetsAppConf.SmartAssetsSymbol,
-			Supply:      config.StaticConfigs.SmartAssetsAppConf.SmartAssetsSupply,
-			Precision:   config.StaticConfigs.SmartAssetsAppConf.SmartAssetsPrecision,
-			Increasable: config.StaticConfigs.SmartAssetsAppConf.SmartAssetsIncreasable,
-			Owner:       config.StaticConfigs.SmartAssetsAppConf.SmartAssetsOwner,
+			Name:        config.SmartAssetsName,
+			Symbol:      config.SmartAssetsSymbol,
+			Supply:      config.SmartAssetsSupply,
+			Precision:   byte(precision),
+			Increasable: config.SmartAssetsIncreasable,
+			Owner:       config.SmartAssetsOwner,
 		},
 		TxPoolLimit:   config.StaticConfigs.SmartAssetsAppConf.TxPoolLimit,
 		ClientTxLimit: config.StaticConfigs.SmartAssetsAppConf.ClientTxLimit,

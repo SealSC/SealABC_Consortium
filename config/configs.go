@@ -66,16 +66,10 @@ type Config struct {
 		MemoDB        string `json:"memo_db"`
 	} `json:"memo_app_conf"`
 	SmartAssetsAppConf struct {
-		SmartAssetsEnable      bool   `json:"smart_assets_enable"`
-		SmartAssetsDB          string `json:"smart_assets_db"`
-		TxPoolLimit            int    `json:"tx_pool_limit"`
-		ClientTxLimit          int    `json:"client_tx_limit"`
-		SmartAssetsName        string `json:"smart_assets_name"`
-		SmartAssetsSymbol      string `json:"smart_assets_symbol"`
-		SmartAssetsSupply      string `json:"smart_assets_supply"`
-		SmartAssetsPrecision   byte   `json:"smart_assets_precision"`
-		SmartAssetsIncreasable bool   `json:"smart_assets_increasable"`
-		SmartAssetsOwner       string `json:"smart_assets_owner"`
+		SmartAssetsEnable bool   `json:"smart_assets_enable"`
+		SmartAssetsDB     string `json:"smart_assets_db"`
+		TxPoolLimit       int    `json:"tx_pool_limit"`
+		ClientTxLimit     int    `json:"client_tx_limit"`
 	} `json:"smart_assets_app_conf"`
 	MySQLConf struct {
 		EnableSQLStorage bool   `json:"enable_sql_storage"`
@@ -107,13 +101,6 @@ func (c *Config) Load() (err error) {
 		fmt.Println("unmarshal config file error: ", err)
 		return
 	}
-
-	c.SmartAssetsAppConf.SmartAssetsName = "SealABC"
-	c.SmartAssetsAppConf.SmartAssetsSymbol = "Seal"
-	c.SmartAssetsAppConf.SmartAssetsSupply = "1000000000000000000000000000"
-	c.SmartAssetsAppConf.SmartAssetsPrecision = 18
-	c.SmartAssetsAppConf.SmartAssetsIncreasable = true
-	c.SmartAssetsAppConf.SmartAssetsOwner = "3d468299df9391e62b5e45531169585ffde27fef"
 
 	return
 }
