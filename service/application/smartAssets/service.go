@@ -18,6 +18,8 @@
 package smartAssets
 
 import (
+	"errors"
+
 	"github.com/SealSC/SealABC/log"
 	"github.com/SealSC/SealABC/service/application/smartAssets/smartAssetsInterface"
 	"github.com/SealSC/SealABC/service/application/smartAssets/smartAssetsLedger"
@@ -37,7 +39,9 @@ func Load() {
 
 func NewSmartAssetsApplication(config *Config) (app chainStructure.IBlockchainExternalApplication, err error) {
 	if config == nil {
-		config = DefaultConfig()
+		err = errors.New("config not found.")
+		log.Log.Error("can't found config ", err.Error())
+		return
 	}
 
 	kvDriver, err := db.NewKVDatabaseDriver(config.KVDBName, config.KVDBConfig)
@@ -51,6 +55,6 @@ func NewSmartAssetsApplication(config *Config) (app chainStructure.IBlockchainEx
 		sqlDriver = config.SQLStorage
 	}
 
-	app, err = smartAssetsInterface.NewApplicationInterface(kvDriver, sqlDriver, config.CryptoTools, config.BaseAssets)
+	app, err = smartAssetsInterface.NewApplicationInterface(kvDriver, sqlDriver, config.CryptoTools, config.BaseAssets, config.TxPoolLimit, config.ClientTxLimit)
 	return
 }

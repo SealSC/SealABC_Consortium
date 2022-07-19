@@ -27,35 +27,70 @@ import (
 	"github.com/SealSC/SealABC/network/http"
 )
 
+//TODO add hotstuff/pbft in ConsensusConf
 type Config struct {
-	ConsensusServiceAddress string   `json:"consensus_service_address"`
-	ConsensusMember         []string `json:"consensus_member"`
-
-	ConsensusDisabled bool `json:"consensus_disabled"`
-
-	BlockchainServiceAddress string      `json:"blockchain_service_address"`
-	BlockchainApiConfig      http.Config `json:"blockchain_api_config"`
-	BlockchainServiceSeeds   []string    `json:"blockchain_service_seeds"`
-
-	WalletPath string   `json:"wallet_path"`
-	Members    []string `json:"members"`
-
-	ChainDB            string `json:"chain_db"`
-	LedgerDB           string `json:"ledger_db"`
-	MemoDB             string `json:"memo_db"`
-	SmartAssetsDB      string `json:"smart_assets_db"`
-	TraceableStorageDB string `json:"traceable_storage_db"`
-
-	LogFile  string `json:"log_file"`
-	LogLevel uint32 `json:"log_level"`
-
-	EngineApiConfig http.Config `json:"engine_api_config"`
-
-	EnableSQLStorage bool `json:"enable_sql_storage"`
-
-	MySQLDBName string `json:"mysql_db_name"`
-	MySQLUser   string `json:"mysql_user"`
-	MySQLPwd    string `json:"mysql_pwd"`
+	ConsensusConf struct {
+		ConsensusDisabled         bool     `json:"consensus_disabled"`
+		ConsensusServiceProtocol  string   `json:"consensus_service_protocol"`
+		ConsensusServiceAddress   string   `json:"consensus_service_address"`
+		ConsensusMember           []string `json:"consensus_member"`
+		Members                   []string `json:"members"`
+		MemberOnlineCheckInterval uint64   `json:"online_check_interval"`
+		ConsensusTimeOut          uint64   `json:"consensus_timeout"`
+		ConsensusInterval         uint64   `json:"consensus_Interval"`
+		ConsensusTopology         string   `json:"consensus_topology"`
+	} `json:"consensus_conf"`
+	BlockChainConf struct {
+		BlockchainServiceAddress  string      `json:"blockchain_service_address"`
+		BlockchainServiceSeeds    []string    `json:"blockchain_service_seeds"`
+		BlockchainApiConfig       http.Config `json:"blockchain_api_config"`
+		ChainDB                   string      `json:"chain_db"`
+		BlockchainServiceProtocol string      `json:"blockchain_service_protocol"`
+	} `json:"block_chain_conf"`
+	DebugConf struct {
+		PProfPort string `json:"pprof_port"`
+	} `json:"debug_conf"`
+	LogConf struct {
+		LogFile  string `json:"log_file"`
+		LogLevel uint32 `json:"log_level"`
+	} `json:"log_conf"`
+	WalletConf struct {
+		WalletPath string `json:"wallet_path"`
+	} `json:"wallet_conf"`
+	UTXOAppConf struct {
+		UTXOAppEnable bool   `json:"utxo_app_enable"`
+		UTXOLedgerDB  string `json:"utxo_ledger_db"`
+	} `json:"utxo_app_conf"`
+	MemoAppConf struct {
+		MemoAppEnable bool   `json:"memo_app_enable"`
+		MemoDB        string `json:"memo_db"`
+	} `json:"memo_app_conf"`
+	SmartAssetsAppConf struct {
+		SmartAssetsEnable      bool   `json:"smart_assets_enable"`
+		SmartAssetsDB          string `json:"smart_assets_db"`
+		TxPoolLimit            int    `json:"tx_pool_limit"`
+		ClientTxLimit          int    `json:"client_tx_limit"`
+		SmartAssetsName        string `json:"smart_assets_name"`
+		SmartAssetsSymbol      string `json:"smart_assets_symbol"`
+		SmartAssetsSupply      string `json:"smart_assets_supply"`
+		SmartAssetsPrecision   byte   `json:"smart_assets_precision"`
+		SmartAssetsIncreasable bool   `json:"smart_assets_increasable"`
+		SmartAssetsOwner       string `json:"smart_assets_owner"`
+	} `json:"smart_assets_app_conf"`
+	MySQLConf struct {
+		EnableSQLStorage bool   `json:"enable_sql_storage"`
+		MySQLDBName      string `json:"mysql_db_name"`
+		MySQLUser        string `json:"mysql_user"`
+		MySQLPwd         string `json:"mysql_pwd"`
+	} `json:"mysql_conf"`
+	EngineConf struct {
+		EngineApiConfig http.Config `json:"engine_api_config"`
+	} `json:"engine_conf"`
+	CryptoConf struct {
+		HashType   string `json:"hash_type"`
+		CipherType string `json:"cipher_type"`
+		SignerType string `json:"signer_type"`
+	} `json:"crypto_conf"`
 }
 
 func (c *Config) Load() (err error) {
@@ -68,11 +103,19 @@ func (c *Config) Load() (err error) {
 
 	cfgStr = bytes.TrimPrefix(cfgStr, []byte("\xef\xbb\xbf"))
 	err = json.Unmarshal(cfgStr, c)
+	if nil != err {
+		fmt.Println("unmarshal config file error: ", err)
+		return
+	}
+
+	c.SmartAssetsAppConf.SmartAssetsName = "SealABC"
+	c.SmartAssetsAppConf.SmartAssetsSymbol = "Seal"
+	c.SmartAssetsAppConf.SmartAssetsSupply = "1000000000000000000000000000"
+	c.SmartAssetsAppConf.SmartAssetsPrecision = 18
+	c.SmartAssetsAppConf.SmartAssetsIncreasable = true
+	c.SmartAssetsAppConf.SmartAssetsOwner = "3d468299df9391e62b5e45531169585ffde27fef"
 
 	return
 }
 
-var Configs = Config{
-	LogFile:  "github.com/SealSC/SealABC.log",
-	LogLevel: 5,
-}
+var StaticConfigs = Config{}

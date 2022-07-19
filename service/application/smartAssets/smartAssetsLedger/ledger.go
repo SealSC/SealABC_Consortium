@@ -406,13 +406,13 @@ func (l *Ledger) DoQuery(req QueryRequest) (interface{}, error) {
 	return nil, Errors.InvalidQuery
 }
 
-func NewLedger(tools crypto.Tools, driver kvDatabase.IDriver) *Ledger {
+func NewLedger(tools crypto.Tools, driver kvDatabase.IDriver, txPoolLimit, clientTxLimit int) *Ledger {
 	l := &Ledger{
 		txPool:        map[string]*Transaction{},
 		txPoolRecord:  []string{},
-		txPoolLimit:   1000,
+		txPoolLimit:   txPoolLimit,
 		clientTxCount: map[string]int{},
-		clientTxLimit: 100,
+		clientTxLimit: clientTxLimit,
 		operateLock:   sync.RWMutex{},
 		poolLock:      sync.Mutex{},
 		genesisAssets: BaseAssets{},

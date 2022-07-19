@@ -190,10 +190,12 @@ func NewApplicationInterface(
 	sqlDriver simpleSQLDatabase.IDriver,
 	tools crypto.Tools,
 	assets smartAssetsLedger.BaseAssetsData,
+	txPoolLimit int,
+	clientTxLimit int,
 ) (app chainStructure.IBlockchainExternalApplication, err error) {
 	sa := SmartAssetsApplication{}
 
-	sa.ledger = smartAssetsLedger.NewLedger(tools, kvDriver)
+	sa.ledger = smartAssetsLedger.NewLedger(tools, kvDriver, txPoolLimit, clientTxLimit)
 
 	if sqlDriver != nil {
 		sa.sqlStorage = smartAssetsSQLStorage.NewStorage(sqlDriver)
