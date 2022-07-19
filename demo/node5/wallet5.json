@@ -1,0 +1,18 @@
+{
+    "Address": "9f583f38983658939cd71f525221bd5317192eb9",
+    "PublicKey": "04f75b01f91f4a7438d7c7c693b46f13f79f2b9010e1a1b77e442c2694dd85277cf8068d1876221c0fcadc9e193ba194274ccdd3b1aea369babb4d9754bb9747e1",
+    "SignerType": "secp256k1",
+    "Data": {
+        "CipherText": "05APd8+DgBK3Oeiwvjd5+PWfdROm1CJQmo2N1me6u6JMSXJXOzkX14ogNlwSMifW6RalCzVGwbA+hFkrxijpuBwIEp953MxG9/uzDyWkC/wKom99DwqL0Xe/i3LqzCkT",
+        "ExternalData": "WWQNyG8AaXBxfytfL3psEA=="
+    },
+    "Config": {
+        "SignerType": "",
+        "CipherType": "AES",
+        "CipherParam": "Q0JD",
+        "KDFType": "PBKDF2",
+        "KDFSalt": "JDJhJDEwJFZMQUpCa2xFbFBtVDBCL3NrZzBnRk94cDVRZ1E0MkFHLmtrZllyNnlsWDV6VnJWMWNqbDQy",
+        "KDFParam": "eyJJdGVyIjoxMDAwMCwiS2V5SGFzaEFsZ29yaXRobSI6ImtlY2Nha181MTIiLCJQYXNzd29yZEhhc2hDb3N0IjoxMH0=",
+        "KeyLength": 32
+    }
+}

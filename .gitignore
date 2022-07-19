@@ -50,7 +50,7 @@ Temporary Items
 #T_^
 .idea
 localPlay
-*.json
+#*.json
 *.log
 SealABCTest
 instance/**
