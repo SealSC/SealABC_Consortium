@@ -37,6 +37,8 @@ github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/SealSC/SealEVM v0.0.0-20220412030258-6b1f4ee97b95 h1:fIr6a02FO2uAFZ7ioYL2S3JNqpgwCErfCTQx5p3IU8Y=
 github.com/SealSC/SealEVM v0.0.0-20220412030258-6b1f4ee97b95/go.mod h1:Ajd7Cqv2vC2TejqwJk0TBiXAWUEozMQ129wEi+t6JS8=
+github.com/SealSC/SealEVM v0.0.0-20220909102151-8da41a50bb6f h1:2a0YmOdHQ3dEvA3HM92j9d9db5dVxBnCbiDdy1Ainv4=
+github.com/SealSC/SealEVM v0.0.0-20220909102151-8da41a50bb6f/go.mod h1:Ajd7Cqv2vC2TejqwJk0TBiXAWUEozMQ129wEi+t6JS8=
 github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNuXJrTP0zS7DqpHGGTw=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=

@@ -225,6 +225,24 @@ func (l Ledger) txResultCheck(orgResult TransactionResult, execResult Transactio
 	return nil
 }
 
+func (l *Ledger) MergeStateCache(stateCache []StateData) (err error) {
+	for _, v := range stateCache {
+		found := false
+		for i, vl := range *l.storageForEVM.stateCache {
+			if bytes.Equal(v.Key, vl.Key) {
+				(*l.storageForEVM.stateCache)[i].NewVal = append([]byte{}, v.NewVal...)
+				found = true
+				break
+			}
+		}
+		if !found {
+			*l.storageForEVM.stateCache = append(*l.storageForEVM.stateCache, v)
+		}
+	}
+
+	return nil
+}
+
 func (l *Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []byte, err error) {
 	l.poolLock.Lock()
 	defer l.poolLock.Unlock()
@@ -244,7 +262,10 @@ func (l *Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []
 		},
 	}
 
+	stateCache := []StateData{}
+
 	l.storageForEVM.txRetCache = &resultCache
+	l.storageForEVM.stateCache = &stateCache
 
 	for _, tx := range txList.Transactions {
 		hash := string(tx.DataSeal.Hash)
@@ -264,7 +285,7 @@ func (l *Ledger) PreExecute(txList TransactionList, blk block.Entity) (result []
 			newState, _, execErr := preExec(tx, resultCache, blk)
 			txForCheck := Transaction{}
 			l.setTxNewState(execErr, newState, &txForCheck)
-			l.storageForEVM.stateCache = &newState
+			l.MergeStateCache(newState)
 			checkErr := l.txResultCheck(tx.TransactionResult, txForCheck.TransactionResult, tx.getHash())
 			if checkErr != nil {
 				err = checkErr
@@ -371,8 +392,11 @@ func (l *Ledger) GetTransactionsFromPool(blk block.Entity) (txList TransactionLi
 		},
 	}
 
+	stateCache := []StateData{}
+
 	mt := merkleTree.Tree{}
 	l.storageForEVM.txRetCache = &resultCache
+	l.storageForEVM.stateCache = &stateCache
 
 	for idx, txHashStr := range l.txPoolRecord {
 		tx := l.txPool[txHashStr]
@@ -383,7 +407,7 @@ func (l *Ledger) GetTransactionsFromPool(blk block.Entity) (txList TransactionLi
 			newState, _, err := preExec(*tx, resultCache, blk)
 			l.setTxNewState(err, newState, tx)
 			tx.SequenceNumber = uint32(idx)
-			l.storageForEVM.stateCache = &newState
+			l.MergeStateCache(newState)
 
 			tx.TransactionResult.ReturnData = resultCache[CachedContractReturnData].Data
 			tx.TransactionResult.NewAddress = resultCache[CachedContractCreationAddress].address

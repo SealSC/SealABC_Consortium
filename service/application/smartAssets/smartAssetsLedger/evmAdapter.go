@@ -120,20 +120,19 @@ func (l Ledger) processEVMBalanceCache(cache storage.BalanceCache, resultCache t
 		} else {
 			localBalance, err = l.BalanceOf(addr)
 			if err != nil {
-				continue
+				localBalance = big.NewInt(0)
 			}
 
-			resultCache[string(addr)] = &txResultCacheData{
-				val: localBalance,
-			}
 		}
 
 		orgBalance := localBalance.Bytes()
 
-		localBalance.Add(localBalance, val)
+		resultCache[string(addr)] = &txResultCacheData{
+			val: val,
+		}
 		balanceToChange = append(balanceToChange, StateData{
 			Key:    BuildKey(StoragePrefixes.Balance, addr),
-			NewVal: localBalance.Bytes(),
+			NewVal: val.Bytes(),
 			OrgVal: orgBalance,
 		})
 	}

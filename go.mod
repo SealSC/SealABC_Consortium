@@ -3,7 +3,7 @@ module github.com/SealSC/SealABC
 go 1.16
 
 require (
-	github.com/SealSC/SealEVM v0.0.0-20220412030258-6b1f4ee97b95
+	github.com/SealSC/SealEVM v0.0.0-20220909102151-8da41a50bb6f
 	github.com/btcsuite/btcd v0.22.0-beta
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/d5c5ceb0/sm_crypto_golang v0.0.0-20180712040946-248d0b0bf119
