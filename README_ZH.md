@@ -1,24 +1,26 @@
 # SealABC
 
-[中文](https://github.com/SealSC/SealABC_Consortium/blob/master/README_ZH.md)
+[English](https://github.com/SealSC/SealABC_Consortium)
 
-SealABC is a highly flexible modular blockchain system development framework. 
-It disassembles the blockchain into network components, consensus components, virtual machine components, storage components, application components, and a set of utility tools.
-SealABC formulates standard interaction interfaces for different components and provides corresponding implementations of these components, allowing developers to directly use the components provided by the SealABC framework to quickly build a high-performance blockchain system.
-
-## Features
-
-+ Standard components integration: Different standard components can be combined into a fully functional high-performance blockchain system by simply writing configuration code. 
-+ Flexible scenario adaptation: Users can provide their own network, consensus, virtual machine and other components to flexibly adapt to the needs of different application scenarios through implementing standard interaction interfaces
-+ Simple application expansion: SealABC provides a set of application layer interfaces, which allows developers to focus on the implementation of on-chain business without concerning with the underlying architecture of the blockchain system.
+SealABC是一个高度灵活的模块化区块链系统开发框架。
+它将区块链拆解为网络组件、共识组件、虚拟机组件、存储组件、应用组件，以及配套的工具集合。  
+SealABC为不同组件制定了标准交互接口，并提供了这些组件的相应的实现，
+让开发者可以直接使用SealABC框架提供的功能实现，快速搭建一条高性能区块链系统。  
 
 
+## 框架特点
 
-## System build
++ 标准功能集成：只需编写配置代码，就可以将不同标准组件组合为功能完备的高性能区块链系统。
++ 场景适配灵活：用户可以通过实现标准交互接口，可以提供自己实现的网络、共识、虚拟机等不同组件，灵活适配不同应用场景需求。
++ 应用扩展简洁：SealABC提供了一套应用层接口，让开发者无需关系区块链系统底层架构，专注于链上业务实现。
 
-SealABC provides a default node implementation. With default nodes and corresponding configuration files, developers can quickly build high-performance blockchain systems.
 
-1. build node
+
+## 系统构建
+
+SealABC 提供了一个默认的节点实现。 通过默认节点和相应的配置文件，开发者可以快速构建高性能的区块链系统。
+
+1. 编译节点程序
 
 ```
 ./build.sh
@@ -31,7 +33,7 @@ such as:
 ```
 
 
-2. generate wallet
+2. 生成钱包
 
 ```
 $ cd utils
@@ -43,7 +45,7 @@ such as:
 ./walletgen ./w1.json
 ```
 
-3. make config files
+3. 创建配置文件
 
 ```
 {
@@ -126,7 +128,7 @@ such as:
 ```
 
 
-4. startup nodes
+4. 启动节点程序
 
 ```
 ./SealABC --config ./demo/node1/config-*.json -p <password>
